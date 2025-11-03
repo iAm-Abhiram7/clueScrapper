@@ -1,12 +1,12 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import 'package:path_provider/path_provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/loading_indicator.dart';
 import '../../../../core/utils/date_formatter.dart';
 import '../../../../shared/services/hive_service.dart';
 import '../../../chat/data/models/chat_model.dart';
-import '../../../chat/data/models/message_model.dart';
 
 /// Chat history screen showing all previous chat sessions with enhanced UI
 class ChatHistoryScreen extends StatefulWidget {
@@ -398,9 +398,7 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen> {
         final chatBox = hiveService.chatBox;
         final messageBox = hiveService.messageBox;
 
-        await chatBox.delete(chatId);
-
-        // Delete all messages
+        // Delete all messages for this chat
         final messagesToDelete = messageBox.values
             .where((msg) => msg.chatId == chatId)
             .map((msg) => msg.messageId)
@@ -409,6 +407,23 @@ class _ChatHistoryScreenState extends State<ChatHistoryScreen> {
         for (final msgId in messagesToDelete) {
           await messageBox.delete(msgId);
         }
+
+        // Delete all images for this chat
+        try {
+          final appDir = await getApplicationDocumentsDirectory();
+          final chatDir = Directory('${appDir.path}/chats/$chatId');
+
+          if (await chatDir.exists()) {
+            await chatDir.delete(recursive: true);
+            debugPrint('Deleted all images for chat $chatId');
+          }
+        } catch (e) {
+          debugPrint('Error deleting chat images: $e');
+          // Continue with deletion even if images fail
+        }
+
+        // Finally, delete the chat itself
+        await chatBox.delete(chatId);
 
         setState(() {});
 

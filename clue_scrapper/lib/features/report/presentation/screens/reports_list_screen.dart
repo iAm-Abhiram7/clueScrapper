@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../shared/widgets/loading_indicator.dart';
 import '../../../../core/utils/date_formatter.dart';
-import '../../../../shared/services/hive_service.dart';
-import '../../../report/data/models/report_model.dart';
+import '../providers/report_provider.dart';
+import '../../domain/entities/report.dart';
+import 'report_detail_screen.dart';
 
 /// Reports list screen showing all generated reports
 class ReportsListScreen extends StatefulWidget {
@@ -24,8 +26,17 @@ class _ReportsListScreenState extends State<ReportsListScreen> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      context.read<ReportProvider>().loadReports();
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     final appColors = context.appColors;
+    final reportProvider = context.watch<ReportProvider>();
 
     return Scaffold(
       backgroundColor: appColors.background,
@@ -72,62 +83,48 @@ class _ReportsListScreenState extends State<ReportsListScreen> {
 
           // Reports List
           Expanded(
-            child: FutureBuilder<List<ReportModel>>(
-              future: _loadReports(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const LoadingIndicator(message: 'Loading reports...');
-                }
-
-                if (snapshot.hasError) {
-                  return _buildErrorState(appColors, snapshot.error.toString());
-                }
-
-                final reports = snapshot.data ?? [];
-                final filteredReports = _filterReports(reports);
-
-                if (filteredReports.isEmpty) {
-                  return _buildEmptyState(appColors);
-                }
-
-                return RefreshIndicator(
-                  onRefresh: () async {
-                    setState(() {}); // Trigger rebuild
-                  },
-                  child: ListView.builder(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    itemCount: filteredReports.length,
-                    itemBuilder: (context, index) {
-                      final report = filteredReports[index];
-                      return _ReportCard(report: report);
-                    },
-                  ),
-                );
-              },
-            ),
+            child: reportProvider.isGenerating
+                ? const LoadingIndicator(message: 'Loading reports...')
+                : _buildReportsList(reportProvider.reports, appColors),
           ),
         ],
       ),
     );
   }
 
-  Future<List<ReportModel>> _loadReports() async {
-    try {
-      final hiveService = HiveService();
-      final reportBox = hiveService.reportBox;
+  Widget _buildReportsList(List<Report> reports, AppColors appColors) {
+    final filteredReports = _filterReports(reports);
 
-      // Get all reports and sort by date (newest first)
-      final reports = reportBox.values.toList();
-      reports.sort((a, b) => b.generatedAt.compareTo(a.generatedAt));
-
-      return reports;
-    } catch (e) {
-      debugPrint('Error loading reports: $e');
-      rethrow;
+    if (filteredReports.isEmpty) {
+      return _buildEmptyState(appColors);
     }
+
+    return RefreshIndicator(
+      onRefresh: () async {
+        await context.read<ReportProvider>().loadReports();
+      },
+      child: ListView.builder(
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        itemCount: filteredReports.length,
+        itemBuilder: (context, index) {
+          final report = filteredReports[index];
+          return _ReportCard(
+            report: report,
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => ReportDetailScreen(reportId: report.reportId),
+                ),
+              );
+            },
+          );
+        },
+      ),
+    );
   }
 
-  List<ReportModel> _filterReports(List<ReportModel> reports) {
+  List<Report> _filterReports(List<Report> reports) {
     if (_searchQuery.isEmpty) return reports;
 
     return reports.where((report) {
@@ -210,59 +207,24 @@ class _ReportsListScreenState extends State<ReportsListScreen> {
       ),
     );
   }
-
-  Widget _buildErrorState(AppColors appColors, String error) {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.error_outline, size: 80, color: appColors.error),
-          const SizedBox(height: 16),
-          Text(
-            'Error Loading Reports',
-            style: Theme.of(
-              context,
-            ).textTheme.headlineSmall?.copyWith(color: appColors.darkCharcoal),
-          ),
-          const SizedBox(height: 8),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 32),
-            child: Text(
-              error,
-              textAlign: TextAlign.center,
-              style: Theme.of(
-                context,
-              ).textTheme.bodyMedium?.copyWith(color: appColors.error),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
 
 /// Report card widget for displaying individual reports
 class _ReportCard extends StatelessWidget {
-  final ReportModel report;
+  final Report report;
+  final VoidCallback onTap;
 
-  const _ReportCard({required this.report});
+  const _ReportCard({required this.report, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
     final appColors = context.appColors;
-    final caseId = 'Case #${report.chatId.substring(5, 11).toUpperCase()}';
+    final caseId = 'Case #${report.chatId.substring(0, 8).toUpperCase()}';
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
-        onTap: () {
-          // TODO: Navigate to report detail in Phase 5
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('Opening report for ${report.crimeType}...'),
-            ),
-          );
-        },
+        onTap: onTap,
         onLongPress: () {
           _showReportOptions(context);
         },

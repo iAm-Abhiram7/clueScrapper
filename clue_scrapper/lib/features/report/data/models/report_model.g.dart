@@ -24,13 +24,18 @@ class ReportModelAdapter extends TypeAdapter<ReportModel> {
       evidenceList: fields[4] as String,
       observations: fields[5] as String,
       crimeType: fields[6] as String,
+      fullContent: fields[7] as String,
+      pdfPath: fields[8] as String?,
+      evidenceCount: fields[9] as int,
+      crimeSceneAnalysis: fields[10] as String,
+      preliminaryFindings: fields[11] as String,
     );
   }
 
   @override
   void write(BinaryWriter writer, ReportModel obj) {
     writer
-      ..writeByte(7)
+      ..writeByte(12)
       ..writeByte(0)
       ..write(obj.reportId)
       ..writeByte(1)
@@ -44,7 +49,17 @@ class ReportModelAdapter extends TypeAdapter<ReportModel> {
       ..writeByte(5)
       ..write(obj.observations)
       ..writeByte(6)
-      ..write(obj.crimeType);
+      ..write(obj.crimeType)
+      ..writeByte(7)
+      ..write(obj.fullContent)
+      ..writeByte(8)
+      ..write(obj.pdfPath)
+      ..writeByte(9)
+      ..write(obj.evidenceCount)
+      ..writeByte(10)
+      ..write(obj.crimeSceneAnalysis)
+      ..writeByte(11)
+      ..write(obj.preliminaryFindings);
   }
 
   @override

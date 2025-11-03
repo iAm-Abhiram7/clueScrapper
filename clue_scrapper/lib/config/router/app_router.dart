@@ -4,6 +4,7 @@ import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/signup_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
 import '../../features/chat/presentation/screens/chat_detail_screen.dart';
+import '../../features/report/presentation/screens/report_detail_screen.dart';
 import '../../core/constants/storage_keys.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -76,6 +77,23 @@ class AppRouter {
           builder: (context, state) {
             final chatId = state.pathParameters['chatId']!;
             return ChatDetailScreen(chatId: chatId);
+          },
+          redirect: (context, state) async {
+            final isLoggedIn = await _isLoggedIn();
+            if (!isLoggedIn) {
+              return login;
+            }
+            return null;
+          },
+        ),
+
+        // Report Detail Screen
+        GoRoute(
+          path: '/report/:reportId',
+          name: 'report-detail',
+          builder: (context, state) {
+            final reportId = state.pathParameters['reportId']!;
+            return ReportDetailScreen(reportId: reportId);
           },
           redirect: (context, state) async {
             final isLoggedIn = await _isLoggedIn();

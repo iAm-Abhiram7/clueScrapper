@@ -14,6 +14,8 @@ import 'features/auth/domain/usecases/login_user.dart';
 import 'features/auth/domain/usecases/signup_user.dart';
 import 'features/home/presentation/providers/navigation_provider.dart';
 import 'features/chat/presentation/providers/chat_provider.dart';
+import 'features/report/presentation/providers/report_provider.dart';
+import 'features/report/data/repositories/report_repository_impl.dart';
 
 /// Main entry point for ClueScraper application
 void main() async {
@@ -94,6 +96,14 @@ class ClueScraper extends StatelessWidget {
             hiveService: hiveService,
             geminiService: geminiService,
             imagePickerService: imagePickerService,
+          ),
+        ),
+
+        // Report Provider
+        ChangeNotifierProvider(
+          create: (_) => ReportProvider(
+            ReportRepositoryImpl(hiveService.reportBox),
+            geminiService,
           ),
         ),
       ],

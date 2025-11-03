@@ -9,6 +9,11 @@ class Report extends Equatable {
   final String evidenceList; // JSON serialized list of evidence
   final String observations;
   final String crimeType;
+  final String fullContent;
+  final String? pdfPath;
+  final int evidenceCount;
+  final String crimeSceneAnalysis;
+  final String preliminaryFindings;
 
   const Report({
     required this.reportId,
@@ -18,18 +23,28 @@ class Report extends Equatable {
     required this.evidenceList,
     required this.observations,
     required this.crimeType,
+    required this.fullContent,
+    this.pdfPath,
+    this.evidenceCount = 0,
+    this.crimeSceneAnalysis = '',
+    this.preliminaryFindings = '',
   });
 
   @override
   List<Object?> get props => [
-    reportId,
-    chatId,
-    generatedAt,
-    summary,
-    evidenceList,
-    observations,
-    crimeType,
-  ];
+        reportId,
+        chatId,
+        generatedAt,
+        summary,
+        evidenceList,
+        observations,
+        crimeType,
+        fullContent,
+        pdfPath,
+        evidenceCount,
+        crimeSceneAnalysis,
+        preliminaryFindings,
+      ];
 
   Report copyWith({
     String? reportId,
@@ -39,6 +54,11 @@ class Report extends Equatable {
     String? evidenceList,
     String? observations,
     String? crimeType,
+    String? fullContent,
+    String? pdfPath,
+    int? evidenceCount,
+    String? crimeSceneAnalysis,
+    String? preliminaryFindings,
   }) {
     return Report(
       reportId: reportId ?? this.reportId,
@@ -48,6 +68,11 @@ class Report extends Equatable {
       evidenceList: evidenceList ?? this.evidenceList,
       observations: observations ?? this.observations,
       crimeType: crimeType ?? this.crimeType,
+      fullContent: fullContent ?? this.fullContent,
+      pdfPath: pdfPath ?? this.pdfPath,
+      evidenceCount: evidenceCount ?? this.evidenceCount,
+      crimeSceneAnalysis: crimeSceneAnalysis ?? this.crimeSceneAnalysis,
+      preliminaryFindings: preliminaryFindings ?? this.preliminaryFindings,
     );
   }
 

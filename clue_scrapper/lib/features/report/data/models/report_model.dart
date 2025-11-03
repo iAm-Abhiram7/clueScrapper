@@ -27,6 +27,21 @@ class ReportModel extends HiveObject {
   @HiveField(6)
   final String crimeType;
 
+  @HiveField(7)
+  final String fullContent;
+
+  @HiveField(8)
+  final String? pdfPath;
+
+  @HiveField(9)
+  final int evidenceCount;
+
+  @HiveField(10)
+  final String crimeSceneAnalysis;
+
+  @HiveField(11)
+  final String preliminaryFindings;
+
   ReportModel({
     required this.reportId,
     required this.chatId,
@@ -35,6 +50,11 @@ class ReportModel extends HiveObject {
     required this.evidenceList,
     required this.observations,
     required this.crimeType,
+    required this.fullContent,
+    this.pdfPath,
+    this.evidenceCount = 0,
+    this.crimeSceneAnalysis = '',
+    this.preliminaryFindings = '',
   });
 
   /// Convert to domain entity
@@ -47,6 +67,11 @@ class ReportModel extends HiveObject {
       evidenceList: evidenceList,
       observations: observations,
       crimeType: crimeType,
+      fullContent: fullContent,
+      pdfPath: pdfPath,
+      evidenceCount: evidenceCount,
+      crimeSceneAnalysis: crimeSceneAnalysis,
+      preliminaryFindings: preliminaryFindings,
     );
   }
 
@@ -60,6 +85,11 @@ class ReportModel extends HiveObject {
       evidenceList: report.evidenceList,
       observations: report.observations,
       crimeType: report.crimeType,
+      fullContent: report.fullContent,
+      pdfPath: report.pdfPath,
+      evidenceCount: report.evidenceCount,
+      crimeSceneAnalysis: report.crimeSceneAnalysis,
+      preliminaryFindings: report.preliminaryFindings,
     );
   }
 
@@ -72,6 +102,11 @@ class ReportModel extends HiveObject {
     String? evidenceList,
     String? observations,
     String? crimeType,
+    String? fullContent,
+    String? pdfPath,
+    int? evidenceCount,
+    String? crimeSceneAnalysis,
+    String? preliminaryFindings,
   }) {
     return ReportModel(
       reportId: reportId ?? this.reportId,
@@ -81,6 +116,11 @@ class ReportModel extends HiveObject {
       evidenceList: evidenceList ?? this.evidenceList,
       observations: observations ?? this.observations,
       crimeType: crimeType ?? this.crimeType,
+      fullContent: fullContent ?? this.fullContent,
+      pdfPath: pdfPath ?? this.pdfPath,
+      evidenceCount: evidenceCount ?? this.evidenceCount,
+      crimeSceneAnalysis: crimeSceneAnalysis ?? this.crimeSceneAnalysis,
+      preliminaryFindings: preliminaryFindings ?? this.preliminaryFindings,
     );
   }
 

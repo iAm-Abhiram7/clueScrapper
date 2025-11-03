@@ -9,6 +9,9 @@ import '../widgets/ai_message_bubble.dart';
 import '../widgets/typing_indicator.dart';
 import '../widgets/chat_input_field.dart';
 import '../widgets/image_gallery_header.dart';
+import '../../../report/presentation/providers/report_provider.dart';
+import '../../../report/presentation/screens/report_detail_screen.dart';
+import '../../../../shared/services/hive_service.dart';
 
 /// Chat detail screen with messages, images, and input
 class ChatDetailScreen extends StatefulWidget {
@@ -102,94 +105,96 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             ],
           ),
           actions: [
-          PopupMenuButton<String>(
-            icon: const Icon(Icons.more_vert),
-            onSelected: (value) async {
-              switch (value) {
-                case 'archive':
-                  // TODO: Implement archive
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Archive feature coming soon'),
-                    ),
-                  );
-                  break;
-                case 'report':
-                  // TODO: Navigate to report generation
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Report generation coming in Phase 5'),
-                    ),
-                  );
-                  break;
-                case 'delete':
-                  final confirm = await _showDeleteDialog();
-                  if (confirm == true && context.mounted) {
-                    await chatProvider.deleteChat(widget.chatId);
-                    if (context.mounted) {
-                      Navigator.of(context).pop();
+            PopupMenuButton<String>(
+              icon: const Icon(Icons.more_vert),
+              onSelected: (value) async {
+                switch (value) {
+                  case 'archive':
+                    // TODO: Implement archive
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Archive feature coming soon'),
+                      ),
+                    );
+                    break;
+                  case 'report':
+                    await _generateReport();
+                    break;
+                  case 'delete':
+                    final confirm = await _showDeleteDialog();
+                    if (confirm == true && context.mounted) {
+                      // Navigate back first to avoid black screen
+                      context.go(AppRouter.home);
+                      // Then delete the chat
+                      await chatProvider.deleteChat(widget.chatId);
+                      if (context.mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(
+                            content: Text('Chat deleted successfully'),
+                          ),
+                        );
+                      }
                     }
-                  }
-                  break;
-              }
-            },
-            itemBuilder: (context) => [
-              const PopupMenuItem(
-                value: 'archive',
-                child: Row(
-                  children: [
-                    Icon(Icons.archive_outlined),
-                    SizedBox(width: 12),
-                    Text('Archive'),
-                  ],
+                    break;
+                }
+              },
+              itemBuilder: (context) => [
+                const PopupMenuItem(
+                  value: 'archive',
+                  child: Row(
+                    children: [
+                      Icon(Icons.archive_outlined),
+                      SizedBox(width: 12),
+                      Text('Archive'),
+                    ],
+                  ),
                 ),
-              ),
-              const PopupMenuItem(
-                value: 'report',
-                child: Row(
-                  children: [
-                    Icon(Icons.description_outlined),
-                    SizedBox(width: 12),
-                    Text('Generate Report'),
-                  ],
+                const PopupMenuItem(
+                  value: 'report',
+                  child: Row(
+                    children: [
+                      Icon(Icons.description_outlined),
+                      SizedBox(width: 12),
+                      Text('Generate Report'),
+                    ],
+                  ),
                 ),
-              ),
-              const PopupMenuItem(
-                value: 'delete',
-                child: Row(
-                  children: [
-                    Icon(Icons.delete_outline, color: Colors.red),
-                    SizedBox(width: 12),
-                    Text('Delete Chat', style: TextStyle(color: Colors.red)),
-                  ],
+                const PopupMenuItem(
+                  value: 'delete',
+                  child: Row(
+                    children: [
+                      Icon(Icons.delete_outline, color: Colors.red),
+                      SizedBox(width: 12),
+                      Text('Delete Chat', style: TextStyle(color: Colors.red)),
+                    ],
+                  ),
                 ),
-              ),
-            ],
-          ),
-        ],
-      ),
-      body: Column(
-        children: [
-          // Image gallery header
-          if (chatProvider.hasImages)
-            ImageGalleryHeader(imagePaths: chatProvider.imagePaths),
+              ],
+            ),
+          ],
+        ),
+        body: Column(
+          children: [
+            // Image gallery header
+            if (chatProvider.hasImages)
+              ImageGalleryHeader(imagePaths: chatProvider.imagePaths),
 
-          // Messages list
-          Expanded(
-            child: chatProvider.isLoading && chatProvider.messages.isEmpty
-                ? _buildLoadingState(appColors)
-                : chatProvider.error != null && chatProvider.messages.isEmpty
-                ? _buildErrorState(appColors, chatProvider.error!)
-                : _buildMessagesList(chatProvider),
-          ),
+            // Messages list
+            Expanded(
+              child: chatProvider.isLoading && chatProvider.messages.isEmpty
+                  ? _buildLoadingState(appColors)
+                  : chatProvider.error != null && chatProvider.messages.isEmpty
+                  ? _buildErrorState(appColors, chatProvider.error!)
+                  : _buildMessagesList(chatProvider),
+            ),
 
-          // Chat input
-          ChatInputField(
-            onSend: _handleSend,
-            isEnabled: !chatProvider.isLoading,
-          ),
-        ],
-      ),
+            // Chat input
+            ChatInputField(
+              onSend: _handleSend,
+              isEnabled: !chatProvider.isLoading,
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -298,5 +303,136 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
         );
       },
     );
+  }
+
+  Future<void> _generateReport() async {
+    final chatProvider = context.read<ChatProvider>();
+    final reportProvider = context.read<ReportProvider>();
+    final hiveService = HiveService();
+    
+    // Check if chat has enough messages
+    if (chatProvider.messages.length < 2) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please have at least one conversation before generating a report'),
+        ),
+      );
+      return;
+    }
+
+    // Check if report already exists
+    final hasExistingReport = await reportProvider.hasReport(widget.chatId);
+    if (hasExistingReport) {
+      final regenerate = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Report Exists'),
+          content: const Text('A report already exists for this chat. Do you want to generate a new one?'),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Regenerate'),
+            ),
+          ],
+        ),
+      );
+      
+      if (regenerate != true) return;
+    }
+
+    // Show loading dialog
+    if (!mounted) return;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => WillPopScope(
+        onWillPop: () async => false,
+        child: AlertDialog(
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const CircularProgressIndicator(),
+              const SizedBox(height: 16),
+              Text(
+                'Generating Forensic Report...',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: context.appColors.darkCharcoal,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                'Analyzing conversation history',
+                style: TextStyle(
+                  fontSize: 13,
+                  color: context.appColors.graphite,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    try {
+      // Get chat model from Hive
+      final chat = hiveService.chatBox.get(widget.chatId);
+      if (chat == null) throw Exception('Chat not found');
+
+      // Get message models from Hive
+      final messageBox = hiveService.messageBox;
+      final messageModels = messageBox.values
+          .where((msg) => msg.chatId == widget.chatId)
+          .toList();
+      messageModels.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+
+      // Generate report
+      final reportId = await reportProvider.generateReport(
+        widget.chatId,
+        messageModels,
+        chat,
+      );
+
+      if (!mounted) return;
+      Navigator.pop(context); // Close loading dialog
+
+      if (reportId != null) {
+        // Show success message
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: const Text('Report generated successfully!'),
+            action: SnackBarAction(
+              label: 'View',
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ReportDetailScreen(reportId: reportId),
+                  ),
+                );
+              },
+            ),
+            duration: const Duration(seconds: 4),
+          ),
+        );
+      } else {
+        throw Exception('Failed to generate report');
+      }
+    } catch (e) {
+      if (!mounted) return;
+      Navigator.pop(context); // Close loading dialog
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Error: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 }

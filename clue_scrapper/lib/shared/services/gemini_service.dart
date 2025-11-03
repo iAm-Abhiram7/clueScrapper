@@ -333,6 +333,81 @@ Format the response in a professional forensic report style.
       throw GeminiException('Failed to generate evidence summary: $e');
     }
   }
+
+  /// Generate comprehensive forensic report from chat conversation
+  ///
+  /// Analyzes entire conversation history and generates a structured
+  /// forensic report with sections for case summary, evidence catalog,
+  /// observations, and preliminary findings
+  ///
+  /// Returns the full report content as formatted text
+  Future<String> generateForensicReport(
+    List<Message> messages,
+    String chatId,
+    int imageCount,
+  ) async {
+    try {
+      // Build conversation history
+      final conversationHistory = messages
+          .map((msg) => '${msg.isUser ? "Investigator" : "AI"}: ${msg.content}')
+          .join('\n\n');
+
+      // Create comprehensive report generation prompt
+      final reportPrompt = '''
+You are a forensic analysis AI creating a comprehensive crime scene investigation report.
+
+Based on the following conversation history, generate a detailed forensic report with these sections:
+
+CASE SUMMARY
+- Brief overview of the case
+- Images analyzed: $imageCount
+- Case classification (Homicide, Assault, Burglary, etc.)
+
+CRIME SCENE ANALYSIS
+- Detailed description of the scene
+- Environmental observations
+- Notable conditions or circumstances
+
+EVIDENCE CATALOG
+For each piece of evidence found, provide:
+- Evidence ID (E1, E2, E3, etc.)
+- Type: Weapon/Biological/Document/Fingerprint
+- Description: Detailed description
+- Location: Where in the scene
+- Confidence: Percentage (e.g., 85%)
+- Forensic Significance: Why this evidence is important
+
+KEY OBSERVATIONS
+- Important patterns or connections between evidence
+- Potential sequence of events
+- Areas requiring further investigation
+
+PRELIMINARY FINDINGS
+- Initial conclusions based on available evidence
+- Suggested next steps for investigators
+- Recommendations for additional testing
+
+EVIDENCE SUMMARY
+- Total evidence items
+- Breakdown by category (Weapons, Biological, Documents, Fingerprints)
+
+Format the response with clear section headers.
+Use professional forensic language throughout.
+Be specific and detailed in all descriptions.
+
+Conversation History:
+$conversationHistory
+''';
+
+      final content = Content.text(reportPrompt);
+      final response = await _model.generateContent([content]);
+
+      return response.text ?? 'Report generation failed. Please try again.';
+    } catch (e) {
+      debugPrint('GeminiService: Error generating report - $e');
+      throw GeminiException('Failed to generate forensic report: $e');
+    }
+  }
 }
 
 /// Custom exception for Gemini service errors
