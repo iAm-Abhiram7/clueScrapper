@@ -3,7 +3,7 @@ import 'package:go_router/go_router.dart';
 import '../../features/auth/presentation/screens/login_screen.dart';
 import '../../features/auth/presentation/screens/signup_screen.dart';
 import '../../features/home/presentation/screens/home_screen.dart';
-import '../../shared/services/hive_service.dart';
+import '../../features/chat/presentation/screens/chat_detail_screen.dart';
 import '../../core/constants/storage_keys.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -69,7 +69,22 @@ class AppRouter {
           },
         ),
 
-        // TODO: Add chat, report, and other routes in future phases
+        // Chat Detail Screen
+        GoRoute(
+          path: '/chat/:chatId',
+          name: 'chat-detail',
+          builder: (context, state) {
+            final chatId = state.pathParameters['chatId']!;
+            return ChatDetailScreen(chatId: chatId);
+          },
+          redirect: (context, state) async {
+            final isLoggedIn = await _isLoggedIn();
+            if (!isLoggedIn) {
+              return login;
+            }
+            return null;
+          },
+        ),
       ],
 
       // Global redirect for authentication
