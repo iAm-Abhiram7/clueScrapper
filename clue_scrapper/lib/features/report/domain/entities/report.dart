@@ -32,19 +32,19 @@ class Report extends Equatable {
 
   @override
   List<Object?> get props => [
-        reportId,
-        chatId,
-        generatedAt,
-        summary,
-        evidenceList,
-        observations,
-        crimeType,
-        fullContent,
-        pdfPath,
-        evidenceCount,
-        crimeSceneAnalysis,
-        preliminaryFindings,
-      ];
+    reportId,
+    chatId,
+    generatedAt,
+    summary,
+    evidenceList,
+    observations,
+    crimeType,
+    fullContent,
+    pdfPath,
+    evidenceCount,
+    crimeSceneAnalysis,
+    preliminaryFindings,
+  ];
 
   Report copyWith({
     String? reportId,

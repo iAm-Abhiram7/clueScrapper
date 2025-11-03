@@ -1,4 +1,6 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'core/theme/app_theme.dart';
@@ -7,6 +9,7 @@ import 'shared/services/hive_service.dart';
 import 'shared/services/gemini_service.dart';
 import 'shared/services/image_picker_service.dart';
 import 'core/constants/api_keys.dart';
+import 'core/utils/app_logger.dart';
 import 'features/auth/presentation/providers/auth_provider.dart';
 import 'features/auth/data/repositories/auth_repository_impl.dart';
 import 'features/auth/data/datasources/auth_local_datasource.dart';
@@ -19,33 +22,68 @@ import 'features/report/data/repositories/report_repository_impl.dart';
 
 /// Main entry point for ClueScraper application
 void main() async {
-  // Ensure Flutter binding is initialized
-  WidgetsFlutterBinding.ensureInitialized();
+  // Catch Flutter framework errors
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+    AppLogger.error(
+      'Flutter Framework Error',
+      details.exception,
+      details.stack,
+    );
+    // TODO: Send to crash reporting service (Firebase Crashlytics, Sentry)
+  };
 
-  // Set system UI overlay style
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-      statusBarIconBrightness: Brightness.dark,
-      systemNavigationBarColor: Colors.white,
-      systemNavigationBarIconBrightness: Brightness.dark,
-    ),
-  );
+  // Catch Dart errors outside Flutter
+  PlatformDispatcher.instance.onError = (error, stack) {
+    AppLogger.error('Uncaught Dart Error', error, stack);
+    // TODO: Send to crash reporting service
+    return true;
+  };
 
-  // Initialize Hive database
-  final hiveService = HiveService();
-  await hiveService.init();
+  // Run app in guarded zone to catch async errors
+  runZonedGuarded(
+    () async {
+      // Ensure Flutter binding is initialized
+      WidgetsFlutterBinding.ensureInitialized();
 
-  // Initialize services
-  final geminiService = GeminiService(ApiKeys.geminiApiKey);
-  final imagePickerService = ImagePickerService();
+      AppLogger.info('ClueScraper starting...');
 
-  runApp(
-    ClueScraper(
-      hiveService: hiveService,
-      geminiService: geminiService,
-      imagePickerService: imagePickerService,
-    ),
+      // Set system UI overlay style
+      SystemChrome.setSystemUIOverlayStyle(
+        const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.dark,
+          systemNavigationBarColor: Colors.white,
+          systemNavigationBarIconBrightness: Brightness.dark,
+        ),
+      );
+
+      // Initialize Hive database
+      AppLogger.info('Initializing Hive database...');
+      final hiveService = HiveService();
+      await hiveService.init();
+      AppLogger.success('Hive database initialized');
+
+      // Initialize services
+      AppLogger.info('Initializing services...');
+      final geminiService = GeminiService(ApiKeys.geminiApiKey);
+      final imagePickerService = ImagePickerService();
+      AppLogger.success('Services initialized');
+
+      runApp(
+        ClueScraper(
+          hiveService: hiveService,
+          geminiService: geminiService,
+          imagePickerService: imagePickerService,
+        ),
+      );
+
+      AppLogger.success('ClueScraper launched successfully');
+    },
+    (error, stack) {
+      AppLogger.error('Zoned Error', error, stack);
+      // TODO: Send to crash reporting service
+    },
   );
 }
 

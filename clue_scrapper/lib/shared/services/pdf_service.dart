@@ -27,23 +27,22 @@ class PdfService {
             // Cover Page
             _buildCoverPage(report, chat, evidenceList.length),
             pw.SizedBox(height: 30),
-            
+
             // Case Summary
             if (report.summary.isNotEmpty)
               _buildSection('CASE SUMMARY', report.summary),
-            
+
             // Crime Scene Analysis
             if (report.crimeSceneAnalysis.isNotEmpty)
               _buildSection('CRIME SCENE ANALYSIS', report.crimeSceneAnalysis),
-            
+
             // Evidence Catalog
-            if (evidenceList.isNotEmpty)
-              _buildEvidenceCatalog(evidenceList),
-            
+            if (evidenceList.isNotEmpty) _buildEvidenceCatalog(evidenceList),
+
             // Key Observations
             if (report.observations.isNotEmpty)
               _buildSection('KEY OBSERVATIONS', report.observations),
-            
+
             // Preliminary Findings
             if (report.preliminaryFindings.isNotEmpty)
               _buildSection('PRELIMINARY FINDINGS', report.preliminaryFindings),
@@ -87,7 +86,7 @@ class PdfService {
             color: const PdfColor.fromInt(0xFF3E5C76), // Indigo Ink
           ),
           pw.SizedBox(height: 24),
-          
+
           // Case Information
           _buildInfoRow('Case ID:', chat.chatId),
           pw.SizedBox(height: 12),
@@ -102,10 +101,13 @@ class PdfService {
           pw.SizedBox(height: 12),
           _buildInfoRow('Evidence Items:', '$evidenceCount'),
           pw.SizedBox(height: 12),
-          _buildInfoRow('Chat Created:', DateFormat('MMM dd, yyyy').format(chat.createdAt)),
-          
+          _buildInfoRow(
+            'Chat Created:',
+            DateFormat('MMM dd, yyyy').format(chat.createdAt),
+          ),
+
           pw.SizedBox(height: 24),
-          
+
           // Status Badge
           pw.Container(
             padding: const pw.EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -145,10 +147,7 @@ class PdfService {
         pw.Expanded(
           child: pw.Text(
             value,
-            style: const pw.TextStyle(
-              fontSize: 14,
-              color: PdfColors.black,
-            ),
+            style: const pw.TextStyle(fontSize: 14, color: PdfColors.black),
           ),
         ),
       ],
@@ -161,7 +160,7 @@ class PdfService {
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
         pw.SizedBox(height: 20),
-        
+
         // Section Title
         pw.Container(
           padding: const pw.EdgeInsets.symmetric(vertical: 8, horizontal: 12),
@@ -178,9 +177,9 @@ class PdfService {
             ),
           ),
         ),
-        
+
         pw.SizedBox(height: 12),
-        
+
         // Section Content
         pw.Container(
           padding: const pw.EdgeInsets.all(16),
@@ -200,7 +199,7 @@ class PdfService {
             ),
           ),
         ),
-        
+
         pw.SizedBox(height: 12),
       ],
     );
@@ -212,7 +211,7 @@ class PdfService {
       crossAxisAlignment: pw.CrossAxisAlignment.start,
       children: [
         pw.SizedBox(height: 20),
-        
+
         // Section Title
         pw.Container(
           padding: const pw.EdgeInsets.symmetric(vertical: 8, horizontal: 12),
@@ -229,9 +228,9 @@ class PdfService {
             ),
           ),
         ),
-        
+
         pw.SizedBox(height: 12),
-        
+
         // Evidence Table
         pw.Table(
           border: pw.TableBorder.all(
@@ -257,7 +256,7 @@ class PdfService {
                 _buildTableCell('Confidence', isHeader: true),
               ],
             ),
-            
+
             // Evidence Rows
             ...evidenceList.map((evidence) {
               return pw.TableRow(
@@ -271,9 +270,9 @@ class PdfService {
             }),
           ],
         ),
-        
+
         pw.SizedBox(height: 16),
-        
+
         // Evidence Summary
         _buildEvidenceSummary(evidenceList),
       ],
@@ -281,7 +280,11 @@ class PdfService {
   }
 
   /// Build a table cell
-  pw.Widget _buildTableCell(String text, {bool isHeader = false, int? maxLines}) {
+  pw.Widget _buildTableCell(
+    String text, {
+    bool isHeader = false,
+    int? maxLines,
+  }) {
     return pw.Padding(
       padding: const pw.EdgeInsets.all(8),
       child: pw.Text(
@@ -301,10 +304,18 @@ class PdfService {
 
   /// Build evidence summary statistics
   pw.Widget _buildEvidenceSummary(List<Evidence> evidenceList) {
-    final weaponCount = evidenceList.where((e) => e.type.toLowerCase().contains('weapon')).length;
-    final biologicalCount = evidenceList.where((e) => e.type.toLowerCase().contains('biological')).length;
-    final documentCount = evidenceList.where((e) => e.type.toLowerCase().contains('document')).length;
-    final fingerprintCount = evidenceList.where((e) => e.type.toLowerCase().contains('fingerprint')).length;
+    final weaponCount = evidenceList
+        .where((e) => e.type.toLowerCase().contains('weapon'))
+        .length;
+    final biologicalCount = evidenceList
+        .where((e) => e.type.toLowerCase().contains('biological'))
+        .length;
+    final documentCount = evidenceList
+        .where((e) => e.type.toLowerCase().contains('document'))
+        .length;
+    final fingerprintCount = evidenceList
+        .where((e) => e.type.toLowerCase().contains('fingerprint'))
+        .length;
 
     return pw.Container(
       padding: const pw.EdgeInsets.all(16),
@@ -330,11 +341,26 @@ class PdfService {
             ),
           ),
           pw.SizedBox(height: 8),
-          pw.Text('Total Evidence Items: ${evidenceList.length}', style: const pw.TextStyle(fontSize: 11)),
-          pw.Text('Weapons: $weaponCount', style: const pw.TextStyle(fontSize: 11)),
-          pw.Text('Biological Materials: $biologicalCount', style: const pw.TextStyle(fontSize: 11)),
-          pw.Text('Documents: $documentCount', style: const pw.TextStyle(fontSize: 11)),
-          pw.Text('Fingerprints: $fingerprintCount', style: const pw.TextStyle(fontSize: 11)),
+          pw.Text(
+            'Total Evidence Items: ${evidenceList.length}',
+            style: const pw.TextStyle(fontSize: 11),
+          ),
+          pw.Text(
+            'Weapons: $weaponCount',
+            style: const pw.TextStyle(fontSize: 11),
+          ),
+          pw.Text(
+            'Biological Materials: $biologicalCount',
+            style: const pw.TextStyle(fontSize: 11),
+          ),
+          pw.Text(
+            'Documents: $documentCount',
+            style: const pw.TextStyle(fontSize: 11),
+          ),
+          pw.Text(
+            'Fingerprints: $fingerprintCount',
+            style: const pw.TextStyle(fontSize: 11),
+          ),
         ],
       ),
     );
@@ -357,17 +383,11 @@ class PdfService {
         children: [
           pw.Text(
             'ClueScraper Forensic Analysis',
-            style: const pw.TextStyle(
-              fontSize: 9,
-              color: PdfColors.grey600,
-            ),
+            style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey600),
           ),
           pw.Text(
             'Page ${context.pageNumber} of ${context.pagesCount}',
-            style: const pw.TextStyle(
-              fontSize: 9,
-              color: PdfColors.grey600,
-            ),
+            style: const pw.TextStyle(fontSize: 9, color: PdfColors.grey600),
           ),
         ],
       ),
@@ -385,18 +405,18 @@ class PdfService {
     try {
       final output = await getApplicationDocumentsDirectory();
       final reportsDir = Directory('${output.path}/reports');
-      
+
       // Create directory if it doesn't exist
       if (!await reportsDir.exists()) {
         await reportsDir.create(recursive: true);
       }
-      
+
       final file = File('${reportsDir.path}/report_$reportId.pdf');
-      
+
       // Save PDF bytes
       final bytes = await pdf.save();
       await file.writeAsBytes(bytes);
-      
+
       return file;
     } catch (e) {
       throw Exception('Failed to save PDF: $e');

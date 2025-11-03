@@ -43,13 +43,15 @@ class ReportProvider extends ChangeNotifier {
   ) async {
     try {
       debugPrint('ReportProvider: Starting report generation for chat $chatId');
-      
+
       _isGenerating = true;
       _error = null;
       notifyListeners();
 
       // Convert MessageModel to Message entities for GeminiService
-      debugPrint('ReportProvider: Converting ${messages.length} messages to entities');
+      debugPrint(
+        'ReportProvider: Converting ${messages.length} messages to entities',
+      );
       final messageEntities = messages.map((m) => m.toEntity()).toList();
 
       // Generate report content using AI
@@ -59,8 +61,10 @@ class ReportProvider extends ChangeNotifier {
         chatId,
         chat.imageCount,
       );
-      
-      debugPrint('ReportProvider: Report content generated, length: ${reportContent.length}');
+
+      debugPrint(
+        'ReportProvider: Report content generated, length: ${reportContent.length}',
+      );
 
       // Parse report sections
       debugPrint('ReportProvider: Parsing report sections');
@@ -77,7 +81,7 @@ class ReportProvider extends ChangeNotifier {
       // Create Report entity
       final reportId = const Uuid().v4();
       debugPrint('ReportProvider: Creating report entity with ID: $reportId');
-      
+
       final report = Report(
         reportId: reportId,
         chatId: chatId,
@@ -108,7 +112,7 @@ class ReportProvider extends ChangeNotifier {
     } catch (e, stackTrace) {
       debugPrint('ReportProvider: ERROR generating report - $e');
       debugPrint('ReportProvider: Stack trace - $stackTrace');
-      
+
       _error = 'Failed to generate report: $e';
       _isGenerating = false;
       notifyListeners();

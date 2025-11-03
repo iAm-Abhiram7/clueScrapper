@@ -307,17 +307,19 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
 
   Future<void> _generateReport() async {
     debugPrint('=== GENERATE REPORT STARTED ===');
-    
+
     final chatProvider = context.read<ChatProvider>();
     final reportProvider = context.read<ReportProvider>();
     final hiveService = HiveService();
-    
+
     // Check if chat has enough messages
     if (chatProvider.messages.length < 2) {
       debugPrint('Not enough messages: ${chatProvider.messages.length}');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please have at least one conversation before generating a report'),
+          content: Text(
+            'Please have at least one conversation before generating a report',
+          ),
         ),
       );
       return;
@@ -327,13 +329,15 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     try {
       final hasExistingReport = await reportProvider.hasReport(widget.chatId);
       debugPrint('Existing report check: $hasExistingReport');
-      
+
       if (hasExistingReport) {
         final regenerate = await showDialog<bool>(
           context: context,
           builder: (context) => AlertDialog(
             title: const Text('Report Exists'),
-            content: const Text('A report already exists for this chat. Do you want to generate a new one?'),
+            content: const Text(
+              'A report already exists for this chat. Do you want to generate a new one?',
+            ),
             actions: [
               TextButton(
                 onPressed: () => Navigator.pop(context, false),
@@ -346,7 +350,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             ],
           ),
         );
-        
+
         if (regenerate != true) {
           debugPrint('User cancelled regeneration');
           return;
@@ -442,7 +446,8 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => ReportDetailScreen(reportId: reportId!),
+                    builder: (context) =>
+                        ReportDetailScreen(reportId: reportId!),
                   ),
                 );
               },
@@ -457,7 +462,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     } catch (e, stackTrace) {
       debugPrint('=== ERROR generating report: $e');
       debugPrint('Stack trace: $stackTrace');
-      
+
       // Close loading dialog if shown
       if (dialogShown && mounted) {
         try {
@@ -467,7 +472,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           debugPrint('Error closing dialog: $navError');
         }
       }
-      
+
       if (!mounted) return;
 
       // Show error message
@@ -480,7 +485,7 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
       );
       debugPrint('Error SnackBar shown');
     }
-    
+
     debugPrint('=== GENERATE REPORT COMPLETED ===');
   }
 }

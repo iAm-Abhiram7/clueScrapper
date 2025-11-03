@@ -20,13 +20,13 @@ class Evidence extends Equatable {
 
   @override
   List<Object?> get props => [
-        evidenceId,
-        type,
-        description,
-        location,
-        confidence,
-        significance,
-      ];
+    evidenceId,
+    type,
+    description,
+    location,
+    confidence,
+    significance,
+  ];
 
   /// Convert to JSON map
   Map<String, dynamic> toJson() {

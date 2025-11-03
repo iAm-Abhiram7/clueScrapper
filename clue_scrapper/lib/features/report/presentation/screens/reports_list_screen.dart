@@ -114,7 +114,8 @@ class _ReportsListScreenState extends State<ReportsListScreen> {
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => ReportDetailScreen(reportId: report.reportId),
+                  builder: (context) =>
+                      ReportDetailScreen(reportId: report.reportId),
                 ),
               );
             },
@@ -219,7 +220,7 @@ class _ReportCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appColors = context.appColors;
-    final caseId = report.chatId.length > 8 
+    final caseId = report.chatId.length > 8
         ? 'Case #${report.chatId.substring(0, 8).toUpperCase()}'
         : 'Case #${report.chatId.toUpperCase()}';
 

@@ -18,10 +18,7 @@ import '../../../chat/data/models/chat_model.dart';
 class ReportDetailScreen extends StatefulWidget {
   final String reportId;
 
-  const ReportDetailScreen({
-    super.key,
-    required this.reportId,
-  });
+  const ReportDetailScreen({super.key, required this.reportId});
 
   @override
   State<ReportDetailScreen> createState() => _ReportDetailScreenState();
@@ -71,7 +68,9 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
       try {
         final decoded = jsonDecode(report.evidenceList) as List;
         evidenceList.addAll(
-          decoded.map((item) => Evidence.fromJson(item as Map<String, dynamic>)),
+          decoded.map(
+            (item) => Evidence.fromJson(item as Map<String, dynamic>),
+          ),
         );
       } catch (e) {
         debugPrint('Error parsing evidence: $e');
@@ -160,8 +159,7 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
               ),
 
             // Evidence Catalog Section
-            if (_evidenceList.isNotEmpty)
-              _buildEvidenceCatalog(appColors),
+            if (_evidenceList.isNotEmpty) _buildEvidenceCatalog(appColors),
 
             // Key Observations Section
             if (_report!.observations.isNotEmpty)
@@ -275,9 +273,7 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
       decoration: BoxDecoration(
         color: appColors.surface,
         borderRadius: BorderRadius.circular(16),
-        border: Border(
-          left: BorderSide(color: appColors.indigoInk, width: 4),
-        ),
+        border: Border(left: BorderSide(color: appColors.indigoInk, width: 4)),
         boxShadow: [
           BoxShadow(
             color: appColors.darkCharcoal.withOpacity(0.05),
@@ -318,11 +314,10 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      DateFormat('MMMM dd, yyyy • HH:mm').format(_report!.generatedAt),
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: appColors.graphite,
-                      ),
+                      DateFormat(
+                        'MMMM dd, yyyy • HH:mm',
+                      ).format(_report!.generatedAt),
+                      style: TextStyle(fontSize: 13, color: appColors.graphite),
                     ),
                   ],
                 ),
@@ -355,11 +350,7 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
             child: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                Icon(
-                  Icons.check_circle,
-                  size: 16,
-                  color: appColors.indigoInk,
-                ),
+                Icon(Icons.check_circle, size: 16, color: appColors.indigoInk),
                 const SizedBox(width: 6),
                 Text(
                   'Active Investigation',
@@ -394,10 +385,7 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
         Expanded(
           child: Text(
             value,
-            style: TextStyle(
-              fontSize: 14,
-              color: appColors.darkCharcoal,
-            ),
+            style: TextStyle(fontSize: 14, color: appColors.darkCharcoal),
           ),
         ),
       ],
@@ -414,9 +402,7 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
       margin: const EdgeInsets.only(bottom: 16),
       child: Card(
         elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -457,9 +443,7 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
       margin: const EdgeInsets.only(bottom: 16),
       child: Card(
         elevation: 2,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
@@ -502,8 +486,8 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
     final confidenceColor = confidencePercent >= 80
         ? appColors.lightSage
         : confidencePercent >= 60
-            ? appColors.mutedSand
-            : appColors.graphite.withOpacity(0.5);
+        ? appColors.mutedSand
+        : appColors.graphite.withOpacity(0.5);
 
     IconData icon;
     Color iconColor;
@@ -566,10 +550,7 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                     const SizedBox(height: 4),
                     Text(
                       evidence.description,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: appColors.graphite,
-                      ),
+                      style: TextStyle(fontSize: 13, color: appColors.graphite),
                     ),
                   ],
                 ),
@@ -694,9 +675,9 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
     } catch (e) {
       if (!mounted) return;
       Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to preview PDF: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to preview PDF: $e')));
     }
   }
 
@@ -732,14 +713,15 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
       await Share.shareXFiles(
         [XFile(pdfFile.path)],
         subject: 'Forensic Report - Case ${_safeCaseId(_chat!.chatId)}',
-        text: 'Forensic analysis report generated on ${DateFormat('MMM dd, yyyy').format(_report!.generatedAt)}',
+        text:
+            'Forensic analysis report generated on ${DateFormat('MMM dd, yyyy').format(_report!.generatedAt)}',
       );
     } catch (e) {
       if (!mounted) return;
       Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Failed to export PDF: $e')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(SnackBar(content: Text('Failed to export PDF: $e')));
     }
   }
 
@@ -753,7 +735,10 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
       builder: (context) {
         final appColors = context.appColors;
         return AlertDialog(
-          title: Text('Delete Report', style: TextStyle(color: appColors.darkCharcoal)),
+          title: Text(
+            'Delete Report',
+            style: TextStyle(color: appColors.darkCharcoal),
+          ),
           content: const Text(
             'Are you sure you want to delete this report? This action cannot be undone.',
           ),

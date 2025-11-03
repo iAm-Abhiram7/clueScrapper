@@ -98,9 +98,15 @@ class DateFormatter {
 
   /// Check if date is yesterday
   static bool isYesterday(DateTime date) {
-    final yesterday = DateTime.now().subtract(const Duration(days: 1));
+    final now = DateTime.now();
+    final yesterday = now.subtract(const Duration(days: 1));
     return date.year == yesterday.year &&
         date.month == yesterday.month &&
         date.day == yesterday.day;
+  }
+
+  /// Format relative time (alias for formatChatTimestamp for testing)
+  static String formatRelative(DateTime date) {
+    return formatChatTimestamp(date);
   }
 }
