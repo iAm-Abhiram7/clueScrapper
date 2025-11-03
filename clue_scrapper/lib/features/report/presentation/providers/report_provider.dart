@@ -42,32 +42,44 @@ class ReportProvider extends ChangeNotifier {
     ChatModel chat,
   ) async {
     try {
+      debugPrint('ReportProvider: Starting report generation for chat $chatId');
+      
       _isGenerating = true;
       _error = null;
       notifyListeners();
 
       // Convert MessageModel to Message entities for GeminiService
+      debugPrint('ReportProvider: Converting ${messages.length} messages to entities');
       final messageEntities = messages.map((m) => m.toEntity()).toList();
 
       // Generate report content using AI
+      debugPrint('ReportProvider: Calling Gemini API to generate report');
       final reportContent = await _geminiService.generateForensicReport(
         messageEntities,
         chatId,
         chat.imageCount,
       );
+      
+      debugPrint('ReportProvider: Report content generated, length: ${reportContent.length}');
 
       // Parse report sections
+      debugPrint('ReportProvider: Parsing report sections');
       final sections = ReportParser.parseReport(reportContent);
       final evidenceList = ReportParser.extractEvidenceItems(reportContent);
+      debugPrint('ReportProvider: Found ${evidenceList.length} evidence items');
 
       // Extract crime type
       final crimeType = ReportParser.extractCrimeType(
         sections['CASE SUMMARY'] ?? '',
       );
+      debugPrint('ReportProvider: Crime type: $crimeType');
 
       // Create Report entity
+      final reportId = const Uuid().v4();
+      debugPrint('ReportProvider: Creating report entity with ID: $reportId');
+      
       final report = Report(
-        reportId: const Uuid().v4(),
+        reportId: reportId,
         chatId: chatId,
         generatedAt: DateTime.now(),
         summary: sections['CASE SUMMARY'] ?? '',
@@ -81,20 +93,26 @@ class ReportProvider extends ChangeNotifier {
       );
 
       // Save to repository
+      debugPrint('ReportProvider: Saving report to repository');
       await _repository.saveReport(report);
 
       // Reload reports
+      debugPrint('ReportProvider: Reloading all reports');
       await loadReports();
 
       _isGenerating = false;
       notifyListeners();
 
+      debugPrint('ReportProvider: Report generation completed successfully');
       return report.reportId;
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('ReportProvider: ERROR generating report - $e');
+      debugPrint('ReportProvider: Stack trace - $stackTrace');
+      
       _error = 'Failed to generate report: $e';
       _isGenerating = false;
       notifyListeners();
-      return null;
+      rethrow; // Re-throw to allow caller to handle
     }
   }
 

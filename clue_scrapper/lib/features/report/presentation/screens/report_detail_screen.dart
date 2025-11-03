@@ -40,6 +40,14 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
     _loadReport();
   }
 
+  /// Safely get substring to avoid RangeError
+  String _safeCaseId(String chatId, [int maxLength = 8]) {
+    if (chatId.length <= maxLength) {
+      return chatId;
+    }
+    return chatId.substring(0, maxLength);
+  }
+
   Future<void> _loadReport() async {
     try {
       final reportProvider = context.read<ReportProvider>();
@@ -191,7 +199,7 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
           const Text('Forensic Report'),
           if (_chat != null)
             Text(
-              'Case #${_chat!.chatId.substring(0, 8)}',
+              'Case #${_safeCaseId(_chat!.chatId)}',
               style: TextStyle(
                 fontSize: 12,
                 color: appColors.graphite,
@@ -301,7 +309,7 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      'Case #${_chat?.chatId.substring(0, 12) ?? "Unknown"}',
+                      'Case #${_chat != null ? _safeCaseId(_chat!.chatId, 12) : "Unknown"}',
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w600,
@@ -723,7 +731,7 @@ class _ReportDetailScreenState extends State<ReportDetailScreen> {
 
       await Share.shareXFiles(
         [XFile(pdfFile.path)],
-        subject: 'Forensic Report - Case ${_chat!.chatId.substring(0, 8)}',
+        subject: 'Forensic Report - Case ${_safeCaseId(_chat!.chatId)}',
         text: 'Forensic analysis report generated on ${DateFormat('MMM dd, yyyy').format(_report!.generatedAt)}',
       );
     } catch (e) {

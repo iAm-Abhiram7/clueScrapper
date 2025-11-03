@@ -306,12 +306,15 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
   }
 
   Future<void> _generateReport() async {
+    debugPrint('=== GENERATE REPORT STARTED ===');
+    
     final chatProvider = context.read<ChatProvider>();
     final reportProvider = context.read<ReportProvider>();
     final hiveService = HiveService();
     
     // Check if chat has enough messages
     if (chatProvider.messages.length < 2) {
+      debugPrint('Not enough messages: ${chatProvider.messages.length}');
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please have at least one conversation before generating a report'),
@@ -321,68 +324,87 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
     }
 
     // Check if report already exists
-    final hasExistingReport = await reportProvider.hasReport(widget.chatId);
-    if (hasExistingReport) {
-      final regenerate = await showDialog<bool>(
-        context: context,
-        builder: (context) => AlertDialog(
-          title: const Text('Report Exists'),
-          content: const Text('A report already exists for this chat. Do you want to generate a new one?'),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancel'),
-            ),
-            TextButton(
-              onPressed: () => Navigator.pop(context, true),
-              child: const Text('Regenerate'),
-            ),
-          ],
-        ),
-      );
+    try {
+      final hasExistingReport = await reportProvider.hasReport(widget.chatId);
+      debugPrint('Existing report check: $hasExistingReport');
       
-      if (regenerate != true) return;
-    }
-
-    // Show loading dialog
-    if (!mounted) return;
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => WillPopScope(
-        onWillPop: () async => false,
-        child: AlertDialog(
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const CircularProgressIndicator(),
-              const SizedBox(height: 16),
-              Text(
-                'Generating Forensic Report...',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.w600,
-                  color: context.appColors.darkCharcoal,
-                ),
+      if (hasExistingReport) {
+        final regenerate = await showDialog<bool>(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Report Exists'),
+            content: const Text('A report already exists for this chat. Do you want to generate a new one?'),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text('Cancel'),
               ),
-              const SizedBox(height: 8),
-              Text(
-                'Analyzing conversation history',
-                style: TextStyle(
-                  fontSize: 13,
-                  color: context.appColors.graphite,
-                ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text('Regenerate'),
               ),
             ],
           ),
-        ),
-      ),
-    );
+        );
+        
+        if (regenerate != true) {
+          debugPrint('User cancelled regeneration');
+          return;
+        }
+      }
+    } catch (e) {
+      debugPrint('Error checking existing report: $e');
+    }
 
+    // Show loading dialog
+    bool dialogShown = false;
+    try {
+      showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) => WillPopScope(
+          onWillPop: () async => false,
+          child: AlertDialog(
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const CircularProgressIndicator(),
+                const SizedBox(height: 16),
+                Text(
+                  'Generating Forensic Report...',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                    color: context.appColors.darkCharcoal,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Analyzing conversation history',
+                  style: TextStyle(
+                    fontSize: 13,
+                    color: context.appColors.graphite,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+      dialogShown = true;
+      debugPrint('Loading dialog shown');
+    } catch (e) {
+      debugPrint('Error showing dialog: $e');
+    }
+
+    String? reportId;
     try {
       // Get chat model from Hive
       final chat = hiveService.chatBox.get(widget.chatId);
-      if (chat == null) throw Exception('Chat not found');
+      if (chat == null) {
+        throw Exception('Chat not found in Hive');
+      }
+      debugPrint('Chat found: ${chat.chatId}');
 
       // Get message models from Hive
       final messageBox = hiveService.messageBox;
@@ -390,29 +412,37 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
           .where((msg) => msg.chatId == widget.chatId)
           .toList();
       messageModels.sort((a, b) => a.timestamp.compareTo(b.timestamp));
+      debugPrint('Found ${messageModels.length} messages');
 
       // Generate report
-      final reportId = await reportProvider.generateReport(
+      debugPrint('Calling reportProvider.generateReport...');
+      reportId = await reportProvider.generateReport(
         widget.chatId,
         messageModels,
         chat,
       );
+      debugPrint('Report generated with ID: $reportId');
 
-      if (!mounted) return;
-      Navigator.pop(context); // Close loading dialog
+      // Close loading dialog
+      if (dialogShown && mounted) {
+        Navigator.of(context, rootNavigator: true).pop();
+        debugPrint('Loading dialog closed');
+      }
 
-      if (reportId != null) {
+      if (reportId != null && mounted) {
         // Show success message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
             content: const Text('Report generated successfully!'),
+            backgroundColor: Colors.green,
             action: SnackBarAction(
               label: 'View',
+              textColor: Colors.white,
               onPressed: () {
                 Navigator.push(
                   context,
                   MaterialPageRoute(
-                    builder: (context) => ReportDetailScreen(reportId: reportId),
+                    builder: (context) => ReportDetailScreen(reportId: reportId!),
                   ),
                 );
               },
@@ -420,19 +450,37 @@ class _ChatDetailScreenState extends State<ChatDetailScreen> {
             duration: const Duration(seconds: 4),
           ),
         );
+        debugPrint('Success SnackBar shown');
       } else {
-        throw Exception('Failed to generate report');
+        throw Exception('Failed to generate report - reportId is null');
       }
-    } catch (e) {
+    } catch (e, stackTrace) {
+      debugPrint('=== ERROR generating report: $e');
+      debugPrint('Stack trace: $stackTrace');
+      
+      // Close loading dialog if shown
+      if (dialogShown && mounted) {
+        try {
+          Navigator.of(context, rootNavigator: true).pop();
+          debugPrint('Loading dialog closed after error');
+        } catch (navError) {
+          debugPrint('Error closing dialog: $navError');
+        }
+      }
+      
       if (!mounted) return;
-      Navigator.pop(context); // Close loading dialog
 
+      // Show error message
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text('Error: ${e.toString()}'),
           backgroundColor: Colors.red,
+          duration: const Duration(seconds: 5),
         ),
       );
+      debugPrint('Error SnackBar shown');
     }
+    
+    debugPrint('=== GENERATE REPORT COMPLETED ===');
   }
 }

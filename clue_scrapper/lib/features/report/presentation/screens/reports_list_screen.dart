@@ -219,7 +219,9 @@ class _ReportCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appColors = context.appColors;
-    final caseId = 'Case #${report.chatId.substring(0, 8).toUpperCase()}';
+    final caseId = report.chatId.length > 8 
+        ? 'Case #${report.chatId.substring(0, 8).toUpperCase()}'
+        : 'Case #${report.chatId.toUpperCase()}';
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),

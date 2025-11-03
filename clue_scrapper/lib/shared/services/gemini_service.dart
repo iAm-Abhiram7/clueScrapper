@@ -58,7 +58,7 @@ Be precise, professional, and detailed in your analysis.
 
       // Text-only model for chat
       _model = GenerativeModel(
-        model: 'gemini-1.5-pro-latest',
+        model: 'gemini-2.5-flash',
         apiKey: _apiKey,
         safetySettings: safetySettings,
       );
@@ -353,7 +353,8 @@ Format the response in a professional forensic report style.
           .join('\n\n');
 
       // Create comprehensive report generation prompt
-      final reportPrompt = '''
+      final reportPrompt =
+          '''
 You are a forensic analysis AI creating a comprehensive crime scene investigation report.
 
 Based on the following conversation history, generate a detailed forensic report with these sections:
